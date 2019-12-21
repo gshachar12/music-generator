@@ -177,7 +177,11 @@ def prepare_data(data_set, seq_length=2):
 
 def main():
 
-
+    """hyper_parameters"""
+    
+    n_h=11 # the size of the hidden state
+    learning_rate=0.2
+    
     # initializing first hidden state and first cell value
     h0=np.zeros((n_h, m))
     c0=np.zeros((n_h, m))
