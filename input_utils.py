@@ -22,7 +22,6 @@ def input2vector(lst):
 
         one_hot = np.zeros((n_x))  # a new array of zeros
         one_hot[lst[t]] = 1
-
         one_hots[:,t]=one_hot
     return one_hots
 def fit3d(input):
