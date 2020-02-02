@@ -6,7 +6,10 @@ import pickle
 from mido import Message, MidiFile, MidiTrack
 
 n_x=128
+"""
+version 1.21- working- please don't change unless you have something really good to add
 
+"""
 def write2csv(midi, txt):
     # enter the information from the csv file to a text file
     with open (txt, "w")as file:
@@ -42,11 +45,10 @@ class encoder:
 class decoder:
     def __init__(self, matrix):
         self.matrix = matrix
-
     def matrix2midi(self):
         matrix = self.matrix
         mid = MidiFile ()  # create a new midi file
-        mid.ticks_per_beat = 200  # tempo
+        mid.ticks_per_beat = 384  # tempo
         track = MidiTrack ()  # build a new track
         mid.tracks.append (track)
         n_x, T_x = matrix.shape
@@ -57,28 +59,28 @@ class decoder:
 
             velocity = int (matrix[pitch, 0])  # the current velocity of the pitch
             if velocity != 0:
-                track.append (Message ('note_on', note=pitch, velocity=velocity, time=0))
-
+                track.append (Message ('note_on', note=pitch, velocity=(120 if velocity!=0 else 0), time=int(matrix[0, 0])))
+        print (matrix[:,3]==matrix[:,5])
         for t in range (1, T_x):
-            count = 0  # handling delta t
-            flag = 1
+
             for pitch in range (1, n_x):
 
                 if matrix[pitch, t] == matrix[pitch, t - 1]:
                     continue
-                velocity = int (matrix[pitch, t])  # the current velocity of the pitch
-                if count:
-                    flag = 0
-                track.append (Message ('note_on', note=pitch, velocity=velocity,
-                                       time=flag * int (matrix[0, t] - matrix[0, t - 1])))
-                count += 1
+                else:
+                    velocity = int (matrix[pitch, t])  # the current velocity of the pitch
+                    print (t, matrix[0, t], matrix[0, t - 1])
+                    track.append (Message ('note_on', note=pitch, velocity=(120 if velocity!=0 else 0),
+                                           time= int (matrix[0, t] - matrix[0, t - 1])))
 
-        for pitch in range (len (matrix[:, prev_t])):
+
+        for pitch in range (len (matrix[:, T_x-1])):
 
             velocity = int (matrix[pitch, prev_t])  # the current velocity of the pitch
             if velocity != 0:
-                track.append (Message ('note_off', note=pitch, velocity=0, time=int (T_x - 1 - prev_t)))
+                track.append (Message ('note_off', note=pitch, velocity=0, time=int (T_x - 1)))
         mid.save ('c://project/music/new_song.mid')
+
 
 
 class dataset ():
@@ -95,8 +97,6 @@ class dataset ():
 
 
         self.matrices=self.get_dataset(directory)
-        self.x_vals, self.y_vals = self.create_inputs(self.matrices[0], 5, 1)
-        print (self.x_vals.shape)
     def create_dataset(self, directory):
         """
         :param directory: the name of the directory
@@ -139,9 +139,10 @@ class dataset ():
 
 
 def main():
-    y=dataset ("c://project/music/test").y_vals
-    print (y.shape)
-    print (y[:, 0,1])
 
+    e=encoder("c://project/music/test/amazing.midi").midi2matrix()
+    r=decoder(e).matrix2midi()
+    write2csv("c://project/music/new_song.mid","c://project/music/new_song.txt" )
+    write2csv("c://project/music/test/amazing.midi","c://project/music/old_song.txt" )
 if __name__ == '__main__':
     main ()
