@@ -82,8 +82,19 @@ class decoder:
 
 
 class dataset ():
+    """ Returns a dataset from the musical pieces. The dataset is devided into input with the shapes:
+
+     x_vals==>(n_x, T_x, m)
+     y_vals==>(n_y, T_y, m)
+
+
+     """
+
     def __init__(self, directory):
-        self.matrices=self.get_dataset()# self.create_dataset(directory)
+
+
+
+        self.matrices=self.get_dataset(directory)
         self.x_vals, self.y_vals = self.create_inputs(self.matrices[0], 5, 1)
         print (self.x_vals.shape)
     def create_dataset(self, directory):
@@ -103,9 +114,14 @@ class dataset ():
 
         return dataset
 
-    def get_dataset(self):
-        with open('c://project/dataset.pkl', "rb") as file:
-            dataset=pickle.load(file)
+    def get_dataset(self, directory):
+        dataset_file='c://project/dataset.pkl'
+        if os.path.exists(dataset_file):
+            with open(dataset_file, "rb") as file:
+                dataset=pickle.load(file)
+        else:
+            dataset=self.create_dataset(directory)
+
         return dataset
 
     def create_inputs(self, matrix, T_x, T_y):
@@ -117,16 +133,15 @@ class dataset ():
             x_vals.append(matrix[:,t:T_x+t])
 
             y_vals.append(matrix[:, t:T_y+t])
-            #print (y_vals[t])
         m=len(x_vals)
 
         return np.dstack(x_vals), np.dstack( y_vals)
 
 
 def main():
-    y=dataset ("c://project/music/well tempered").y_vals
+    y=dataset ("c://project/music/test").y_vals
     print (y.shape)
-    print (y[:, 0,0])
+    print (y[:, 0,1])
 
 if __name__ == '__main__':
     main ()
