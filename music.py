@@ -1,11 +1,13 @@
-import pyaudio
+
 import numpy as np
 from operator import itemgetter
-from scipy import interpolate
-import matplotlib.pyplot as plt
 
 sampling_rate = 44100
 maximal_midi_note=127
+
+major_intervals = [2, 2, 1, 2, 2, 2, 1]
+minor_scale_intervals = [2, 1, 2, 2, 1, 2, 2]
+
 class Note:
     # piano-amplitude modulation
     notes = ['b', 'c', 'c#', 'd', 'd#', 'e', 'f', 'f#', 'g', 'g#', 'a', 'a#']  # list of possible notes
@@ -127,28 +129,19 @@ class music():
         return new_sound * note  # apply the function on the sound
 
 
-def chord_notation(chord):
-    "returns a string according to the chord notation"
-    chord=chord.lower()
+def chord_notation(scale, degree):
+    "returns a string with respect to the chord notation"
+    scale=scale.lower()
+    scale = midi_scale(scale)[:-1]
+    print (scale)
+    degree-=1
+    interval=2 # the interval between each note
+    chord_notes=3# number of notes in a chord
+    positions=[i+degree if (i+degree)<len(scale) else divmod(i+degree, len(scale))[1] for i in range(0,chord_notes+interval , interval  )]
+    print (positions)
+    #chord=circulation(scale[])
 
-    major_intervals=[2,2,1,2,2,2,1]
-    minor_scale_intervals = [2, 1, 2, 2, 1, 2, 2]
-    intervals = minor_scale_intervals if "m" in chord else major_intervals # minor_chord if there is m
-    chord_intervals = [3, 4] if "sus4" in chord else [2, 4] # intervals between the notes in the chord
-    chord=chord[0]
-    first=Note.notes.index(chord)
-
-
-
-    chord_notation=[first+sum(intervals[:chord_intervals[0]]), first+sum(intervals[:chord_intervals[1]])]
-    for i in range(len(chord_notation)):
-        if chord_notation[i]>=len(Note.notes): # if the note is higher than possible
-            chord_notation[i]=divmod(chord_notation[i],len(Note.notes))[1] # adjust the note to the scale
-            chord_notation[i]= Note.notes[chord_notation[i]]+"5"
-        else:
-            chord_notation[i] = Note.notes[chord_notation[i]]
-    return chord+chord_notation[0]+chord_notation[1]
-
+    return [scale[position] for position in positions]
 
 def play(music_obj):
     chunk = music_obj.piece
@@ -166,13 +159,11 @@ def circulation(lst):
             yield var
 
 
-def midi_scale(reference_note):
+def midi_scale(reference_note, minimal_octave=4, maximal_octave=5):
     # returns a vector representing the midi notes allowed for the scale
-    major_intervals = [2, 2, 1, 2, 2, 2, 1]
-    minor_scale_intervals = [2, 1, 2, 2, 1, 2, 2]
     intervals = minor_scale_intervals if "m" in reference_note else major_intervals  # minor_chord if there is m
     reference_note = reference_note[0]
-    scale_notes = np.zeros((maximal_midi_note))  # a vector that contain will contain all the allowed notes in a scale
+    scale_notes = list()  # a vector that contain will contain all the allowed notes in a scale
     current_note = notes2midi(reference_note+"0")
 
 
@@ -181,11 +172,12 @@ def midi_scale(reference_note):
     while current_note < maximal_midi_note: # fill the notes vector with the scale notes.
 
         # convert the note to the midi suitable number and turn on the suitable pitch in the vector
-        scale_notes[current_note] = 1
-        print (current_note)
+        scale_notes.append(current_note)
         interval=next(intervals)
         current_note += interval # add the next interval to the current note
-    return scale_notes[21:109] # trim the scale to piano notes
+    min_note=scale_notes.index(notes2midi(reference_note+str(minimal_octave)))
+    max_note=scale_notes.index(notes2midi(reference_note+str(maximal_octave)))
+    return scale_notes[min_note: max_note+1] # trim the scale to piano notes
 
 def notes2midi(reference_note):
     # returns the midi number of the given note. for example c3-->48
@@ -197,11 +189,18 @@ def notes2midi(reference_note):
     midi_number = octave*12+note_index-1
     return midi_number
 
+def midi2note(midi_number):
+    # returns the midi number of the given note. for example c3-->48
+    octave, note=divmod(midi_number+1, 12)
+
+    return Note.notes[note]+str(octave)
+
+
 
 
 def main():
-    print (notes2midi("c0"))
-    print (midi_scale("a"))
+
+    print (chord_notation("a",7))
 if __name__ == '__main__':
 
     main()
