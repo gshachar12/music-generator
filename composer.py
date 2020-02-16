@@ -1,11 +1,11 @@
 import numpy as np
 from collections import Counter
 from music import chord_notation
-import pandas as pd
-import matplotlib.pyplot as plt
+import pickle
 import csv
+import os
 
-file = "c://project/chord-progressions.csv"
+file = "c://project/algorithms/chord-progressions.csv"
 # read chord progressions data from the database
 
 file = csv.reader (open (file, 'r'))
@@ -16,7 +16,7 @@ def markov_chains():
     #guesses chords using the markov chain, and then sends the guess to the player
     #np.random.seed(2)  # save the current results
     bigrams = []  # create sequences of two notes
-
+    dataset_file = 'c://project/matrix.pkl'
     for progression in chords:
         for i in range(len(progression)-1):
             bigrams.append((progression[i], progression[i+1])) # append tupples to the list- each
@@ -36,8 +36,19 @@ def markov_chains():
 
         rows, cols=key
         markov_matrix[used_chords.index(rows)+1, used_chords.index(cols)+1]=value
+    np.save( dataset_file, markov_matrix)
     return markov_matrix  # returns possible states in the system
 
+def get_matrix(dataset_file='c://project/matrix.pkl'):
+
+        if os.path.exists(dataset_file):
+            with open(dataset_file, "rb") as file:
+                dataset=np.load(file)
+        else:
+            dataset=markov_chains()
+
+        return dataset
+probability_matrix = get_matrix()
 def probability(current_chord):
      """
 
@@ -45,22 +56,25 @@ def probability(current_chord):
      :param second:
      :return: the probability for a second event given the first
      """
-     file = "c://project/chord-progressions.csv"
-     # read chord progressions data from the database
-
-     file = csv.reader (open (file, 'r'))
 
 
-     probability_matrix = markov_chains ()
      probabilities = probability_matrix[used_chords.index (current_chord)+1,1:]
      options = probability_matrix[1:, 0]
      next_chord = np.random.choice (options, p=probabilities)  # make a choice by following the given probabilities
 
-     return next_chord
 
+     return next_chord
+def sequence(length):
+    chords=[]
+    current_chord=1
+    for i in range(length):
+        next_chord=probability(current_chord)
+        chords.append(next_chord)
+        current_chord=next_chord
+    return chords
 
 def main():
-    print (probability(4))
+    print (sequence(6))
 if __name__ == '__main__':
     main()
 
